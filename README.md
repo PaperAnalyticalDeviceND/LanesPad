@@ -8,4 +8,4 @@ The PAD repository contains a mixture of Python and C++ code to allow the analys
 >make
 
 To run the code:
-python lanes.py -r processed -t lanetemplate.png text/img.jpg
+>python lanes.py -r processed -t lanetemplate.png text/img.jpg
