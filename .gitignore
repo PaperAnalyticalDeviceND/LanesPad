@@ -5,3 +5,9 @@ marker_contours/Makefile
 marker_contours/cmake_install.cmake
 marker_contours/marker_contour
 
+marker_scan/CMakeCache.txt
+marker_scan/CMakeFiles/
+marker_scan/ComputerVision2
+marker_scan/Makefile
+marker_scan/cmake_install.cmake
+
