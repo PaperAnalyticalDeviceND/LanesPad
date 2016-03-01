@@ -361,7 +361,8 @@ orig_im = cv2.imread(filename)
 dataLines = []
 
 try:
-    p = subprocess.Popen(["./ComputerVision2", filename], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    #p = subprocess.Popen(["market_scan/ComputerVision2", filename], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    p = subprocess.Popen(["marker_contours/marker_contour", filename], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (stdout, stderr) = p.communicate()
     dataLines = stdout.split("\n")
 except:
