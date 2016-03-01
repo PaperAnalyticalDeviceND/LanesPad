@@ -159,7 +159,14 @@ int main ( int argc, char **argv )
         //calculate distance to nearest edge
         float dist = std::min(std::min(std::min(mc[i].x, 600 - mc[i].x), mc[i].y), image.size().height - mc[i].y);
         
-        order.push_back(Point2f(i, dist));
+        Rect box = boundingRect(contours[Markers[i]]);
+        
+        float dia = std::max(box.width, box.height) / 2;
+
+        //only add it if sensible
+        if(dia < 40){
+            order.push_back(Point2f(i, dist));
+        }
     }
 
     //sort vector
@@ -174,7 +181,7 @@ int main ( int argc, char **argv )
         
         Rect box = boundingRect(contours[Markers[i]]);
         
-        float dia = std::max(box.width, box.height);// / 2;
+        float dia = std::max(box.width, box.height) / 2;
         
         circle( image, mc[i], dia, Scalar( 0, 0, 255 ), 1, 8 );
         
