@@ -347,6 +347,12 @@ print 'filename is :', filename
 orig_im = cv2.imread(filename)
 (h, w, p) = orig_im.shape
 
+#need to rotate image?
+if w>h:
+    orig_im = np.rot90( orig_im, 1 )
+
+(h, w, p) = orig_im.shape
+
 #dont print if LS as scale invariant
 #print "Original Size:", w, h, p
 
@@ -366,7 +372,8 @@ try:
     (stdout, stderr) = p.communicate()
     dataLines = stdout.split("\n")
 except:
-    print "Unexpected error executing ComputerVision2:", sys.exc_info()[0], ". Reverting to Template method."
+    print "Unexpected error executing ComputerVision2:", sys.exc_info()[0], "."
+    sys.exit(-3)
 
 points = []
 sumsize = 0

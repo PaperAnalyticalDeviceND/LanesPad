@@ -45,6 +45,11 @@ int main ( int argc, char **argv )
 		return -1;
 	}
     
+    if(imagein.size().width >  imagein.size().height){
+        transpose(imagein, imagein);
+        flip(imagein, imagein, 1);
+    }
+
     float new_width = 600.0;
     
     //get image size
@@ -135,7 +140,7 @@ int main ( int argc, char **argv )
         float dia = std::max(box.width, box.height) / 2;
 
         //only add it if sensible
-        if(dia < 26){
+        if(dia < 30){
             order.push_back(Point2f(i, dist));
         }
     }
