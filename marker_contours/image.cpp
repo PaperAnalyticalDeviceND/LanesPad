@@ -118,22 +118,20 @@ int main ( int argc, char **argv )
         {
             Markers.push_back(i);
         }
-        if( c > 1)
-            std::cout << "Depth  " << c << " size " << i << std::endl;
+        //if( c > 1)
+          //  std::cout << "Depth  " << c << " size " << i << std::endl;
     }
     
     // Get Moments for all Contours and the mass centers
     vector<data_point> order;
     
     for( int i=0; i < Markers.size(); i++){
-        Scalar color( 0,128,0);//rand()&200, rand()&200, rand()&200 );
-        //if(Markers[i] > 1000){
+        Scalar color( 0,128,0);
         drawContours(image, contours, Markers[i], color, 2, 8, hierarchy);
         
         Moments mum = moments( contours[Markers[i]], false );
         Point2f mc = Point2f( mum.m10/mum.m00 , mum.m01/mum.m00 );
 
-        //}
         //std::cout << "Markers " << Markers[i] << " index " << i << ", dist to mid " << cv_distance(midpoint, mc[i]) << "." << std::endl;
         
         //calculate distance to nearest edge
@@ -175,9 +173,6 @@ int main ( int argc, char **argv )
     //sort vector
     std::sort(order.begin(), order.end(), orderfunction);
     
-    //get size up to 6
-    int sz = std::min(6, (int)order.size());
-    
     //count points
     int pcount = 0;
     
@@ -199,7 +194,7 @@ int main ( int argc, char **argv )
     if(show){
         imshow ( "Image", image );
 
-        key = waitKey(500000);	// OPENCV: wait for 1ms before accessing next frame
+        key = waitKey(0);	// OPENCV: wait for 1ms before accessing next frame
     }
 
 	return 0;

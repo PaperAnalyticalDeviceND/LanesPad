@@ -607,7 +607,7 @@ comparePoints = [[[387, 214], [387, 1164]], [[387-17, 214], [387, 1164]], [[387+
 #get maximum points until we have all three or the certainty is <=threshold
 cellmask = np.ones(result.shape, np.uint8)
 cellmaxVal = 1
-cellthr = 0.85
+cellthr = 0.70
 
 while len(cellPoints) < 2 and cellmaxVal > cellthr:
     cellminVal, cellmaxVal, cellminLoc, cellmaxLoc = cv2.minMaxLoc(result, cellmask);
@@ -623,7 +623,7 @@ while len(cellPoints) < 2 and cellmaxVal > cellthr:
 ####################################################################################################
 # bail if error exceeds 15 pixels (relates to sample circle in relation to sample well)
 if len(cellPoints) != 2:
-    print "Error: Wax target not found with > 0.85 confidence.",filename
+    print "Error: Wax target not found with > 0.70 confidence.",filename
     sys.exit(-5)
 
 #check order of points and add equivalent points from artwork
