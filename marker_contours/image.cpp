@@ -10,22 +10,25 @@
 using namespace cv;
 using namespace std;
 
-const int CV_QR_NORTH = 0;
-const int CV_QR_EAST = 1;
-const int CV_QR_SOUTH = 2;
-const int CV_QR_WEST = 3;
-
-float cv_distance(Point2f P, Point2f Q);					// Get Distance between two points
-float cv_lineEquation(Point2f L, Point2f M, Point2f J);		// Perpendicular Distance of a Point J from line formed by Points L and M; Solution to equation of the line Val = ax+by+c 
-float cv_lineSlope(Point2f L, Point2f M, int& alignement);	// Slope of a line by two Points L and M on it; Slope of line, S = (x1 -x2) / (y1- y2)
-void cv_getVertices(vector<vector<Point> > contours, int c_id,float slope, vector<Point2f>& X);
-void cv_updateCorner(Point2f P, Point2f ref ,float& baseline,  Point2f& corner);
-void cv_updateCornerOr(int orientation, vector<Point2f> IN, vector<Point2f> &OUT);
-bool getIntersectionPoint(Point2f a1, Point2f a2, Point2f b1, Point2f b2, Point2f& intersection);
-float cross(Point2f v1,Point2f v2);
+struct data_point {
+    data_point(int ii, float id, float idi, Point2f imc){
+        i = ii;
+        dist = id;
+        dia = idi;
+        mc = imc;
+        valid = true;
+    }
+    int i;
+    float dist;
+    float dia;
+    Point2f mc;
+    bool valid;
+};
 
 //sort method
-bool orderfunction (Point2f i,Point2f j) { return (i.y<j.y); }
+bool orderfunction (data_point i,data_point j) { return (i.dist<j.dist); }
+
+void balance_white(cv::Mat mat);
 
 // Start of Main Loop
 //------------------------------------------------------------------------------------------------------------------------
@@ -50,6 +53,8 @@ int main ( int argc, char **argv )
         flip(imagein, imagein, 1);
     }
 
+    balance_white(imagein);
+    
     float new_width = 600.0;
     
     //get image size
@@ -84,7 +89,7 @@ int main ( int argc, char **argv )
     /// Reduce noise with a kernel 3x3
     blur( gray, gray_blur, Size(2,2) );
 
-    Canny(gray_blur, edges, 40 , 150, 3);		// Apply Canny edge detection on the gray image
+    Canny(gray, edges, 40 , 150, 3);		// Apply Canny edge detection on the gray image
 
 
     findContours( edges, contours, hierarchy, RETR_TREE, CV_CHAIN_APPROX_SIMPLE); // Find contours with hierarchy
@@ -109,31 +114,30 @@ int main ( int argc, char **argv )
         if(hierarchy[k][2] != -1)
         c = c+1;
 
-        if (c >= 5)
+        if (c >= 3)
         {
             Markers.push_back(i);
         }
+        if( c > 1)
+            std::cout << "Depth  " << c << " size " << i << std::endl;
     }
     
     // Get Moments for all Contours and the mass centers
-    //vector<Moments> mu(contours.size());
-    vector<Point2f> mc(Markers.size());
-    vector<Point2f> order;
+    vector<data_point> order;
     
     for( int i=0; i < Markers.size(); i++){
-        Scalar color( 128,0,0);//rand()&200, rand()&200, rand()&200 );
+        Scalar color( 0,128,0);//rand()&200, rand()&200, rand()&200 );
         //if(Markers[i] > 1000){
         drawContours(image, contours, Markers[i], color, 2, 8, hierarchy);
         
         Moments mum = moments( contours[Markers[i]], false );
-        mc[i] = Point2f( mum.m10/mum.m00 , mum.m01/mum.m00 );
+        Point2f mc = Point2f( mum.m10/mum.m00 , mum.m01/mum.m00 );
 
-        //circle( image, mc[i], 10.0, Scalar( 0, 0, 255 ), 1, 8 );
         //}
         //std::cout << "Markers " << Markers[i] << " index " << i << ", dist to mid " << cv_distance(midpoint, mc[i]) << "." << std::endl;
         
         //calculate distance to nearest edge
-        float dist = std::min(std::min(std::min(mc[i].x, new_width - mc[i].x), mc[i].y), image.size().height - mc[i].y);
+        float dist = std::min(std::min(std::min(mc.x, new_width - mc.x), mc.y), image.size().height - mc.y);
         
         Rect box = boundingRect(contours[Markers[i]]);
         
@@ -141,29 +145,55 @@ int main ( int argc, char **argv )
 
         //only add it if sensible
         if(dia < 30){
-            order.push_back(Point2f(i, dist));
+            order.push_back(data_point(i, dist, dia, mc));
         }
     }
 
+    //remove duplicates by taking the largest when points close
+    for( int i=0; i < order.size(); i++){
+        if(order[i].valid){
+            for( int j=i+1; j < order.size(); j++){
+                if(order[j].valid){
+                    const float ix = order[i].mc.x;
+                    const float iy = order[i].mc.y;
+                    const float jx = order[j].mc.x;
+                    const float jy = order[j].mc.y;
+                    
+                    if(fabs(ix-jx) < 5 && fabs(iy-jy) < 5){
+                        if(order[i].dia < order[j].dia){
+                            order[i].valid = false;
+                            break;
+                        }else{
+                            order[j].valid = false;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
     //sort vector
     std::sort(order.begin(), order.end(), orderfunction);
     
     //get size up to 6
     int sz = std::min(6, (int)order.size());
     
+    //count points
+    int pcount = 0;
+    
     //loop
-    for( int j=0; j<sz; j++){
-        int i = order[j].x;
-        
-        Rect box = boundingRect(contours[Markers[i]]);
-        
-        float dia = std::max(box.width, box.height) / 2;
-        
-        circle( image, mc[i], dia, Scalar( 0, 0, 255 ), 1, 8 );
-        
-        //std::cout << "i "<< i << ", " << order[j] << " Markers " << Markers[i] << " index " << i << ", dist to edge " << order[j].y << "." << std::endl;
-        std::cout << "Point: "<< int(mc[i].y * ratio + 0.5) << ", " << int(mc[i].x * ratio  + 0.5) << ", " << int(dia * ratio + 0.5) << std::endl;
-        
+    for( int j=0; j<order.size(); j++){
+        if(order[j].valid){
+            int i = order[j].i;
+            float dia = order[j].dia;
+            Point2f mcd = order[j].mc;
+            
+            circle( image, mcd, dia, Scalar( 0, 0, 255 ), 1, 8 );
+            
+            //std::cout << "i "<< i << ", " << order[j] << " Markers " << Markers[i] << " index " << i << ", dist to edge " << order[j].y << "." << std::endl;
+            std::cout << "Point: "<< int(mcd.y * ratio + 0.5) << ", " << int(mcd.x * ratio  + 0.5) << ", " << int(dia * ratio + 0.5) << std::endl;
+            if(pcount++ >= 5) break;
+        }
     }
     
     if(show){
@@ -177,6 +207,51 @@ int main ( int argc, char **argv )
 
 // End of Main Loop
 //--------------------------------------------------------------------------------------
-
+void balance_white(cv::Mat mat) {
+    double discard_ratio = 0.05;
+    int hists[3][256];
+    memset(hists, 0, 3*256*sizeof(int));
+    
+    for (int y = 0; y < mat.rows; ++y) {
+        uchar* ptr = mat.ptr<uchar>(y);
+        for (int x = 0; x < mat.cols; ++x) {
+            for (int j = 0; j < 3; ++j) {
+                hists[j][ptr[x * 3 + j]] += 1;
+            }
+        }
+    }
+    
+    // cumulative hist
+    int total = mat.cols*mat.rows;
+    int vmin[3], vmax[3];
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 255; ++j) {
+            hists[i][j + 1] += hists[i][j];
+        }
+        vmin[i] = 0;
+        vmax[i] = 255;
+        while (hists[i][vmin[i]] < discard_ratio * total)
+        vmin[i] += 1;
+        while (hists[i][vmax[i]] > (1 - discard_ratio) * total)
+        vmax[i] -= 1;
+        if (vmax[i] < 255 - 1)
+        vmax[i] += 1;
+    }
+    
+    
+    for (int y = 0; y < mat.rows; ++y) {
+        uchar* ptr = mat.ptr<uchar>(y);
+        for (int x = 0; x < mat.cols; ++x) {
+            for (int j = 0; j < 3; ++j) {
+                int val = ptr[x * 3 + j];
+                if (val < vmin[j])
+                val = vmin[j];
+                if (val > vmax[j])
+                val = vmax[j];
+                ptr[x * 3 + j] = static_cast<uchar>((val - vmin[j]) * 255.0 / (vmax[j] - vmin[j]));
+            }
+        }
+    }
+}
 
 // EOF
