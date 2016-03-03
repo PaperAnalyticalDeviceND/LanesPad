@@ -89,7 +89,7 @@ int main ( int argc, char **argv )
     /// Reduce noise with a kernel 3x3
     blur( gray, gray_blur, Size(2,2) );
 
-    Canny(gray, edges, 40 , 150, 3);		// Apply Canny edge detection on the gray image
+    Canny(gray_blur, edges, 40 , 150, 3);		// Apply Canny edge detection on the gray image
 
 
     findContours( edges, contours, hierarchy, RETR_TREE, CV_CHAIN_APPROX_SIMPLE); // Find contours with hierarchy
@@ -142,7 +142,7 @@ int main ( int argc, char **argv )
         float dia = std::max(box.width, box.height) / 2;
 
         //only add it if sensible
-        if(dia < 30){
+        if(dia < 30 && dia > 15){
             order.push_back(data_point(i, dist, dia, mc));
         }
     }
