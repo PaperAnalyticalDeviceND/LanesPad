@@ -173,6 +173,21 @@ int main ( int argc, char **argv )
     //sort vector
     std::sort(order.begin(), order.end(), orderfunction);
     
+    //find center of mass
+    Point2f com = Point2f(0.0, 0.0);
+    float pcountf = 0.0;
+
+    for( int i=0; i<order.size(); i++){
+        if(order[i].valid){
+            com += order[i].mc;
+            pcountf += 1.0;
+        }
+    }
+    
+    com.x /= pcountf;
+    com.y /= pcountf;
+    circle( image, com, 10, Scalar( 0, 255, 255 ), 1, 8 );
+    
     //count points
     int pcount = 0;
     
@@ -182,6 +197,13 @@ int main ( int argc, char **argv )
             int i = order[j].i;
             float dia = order[j].dia;
             Point2f mcd = order[j].mc;
+            
+            //if top LHS then QR code marker
+            if(mcd.x < (com.x + 30) && mcd.y < com.y){
+                dia = 27;
+            }else{
+                dia = 20;
+            }
             
             circle( image, mcd, dia, Scalar( 0, 0, 255 ), 1, 8 );
             
