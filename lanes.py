@@ -447,6 +447,16 @@ if len(qrpoints) >= 2 and len(outerpoints) >= 2:
     #add qr points and their transform
     transqrpoints = [[82, 64], [82, 226], [244, 64]]
 
+    #fist check if aal available
+    if len(qrpoints) == 3:
+        #does point 1 exist? then get rid of co-linear point, remove 5
+        if outerpoints[0][0] >= 0:
+            qrpoints[1][0] = -1;
+        #does point 3 exist? then get rid of co-linear point, remove 6
+        #if outerpoints[2][0] >= 0:
+        #    qrpoints[2][0] = -1;
+
+    #add QR points
     for i in range(0, 3):
         if qrpoints[i][0] >= 0:
             if pcount < 4:
