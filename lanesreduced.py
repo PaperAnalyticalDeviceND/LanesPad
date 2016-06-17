@@ -188,26 +188,27 @@ orig_im = cv2.resize(orig_im, (770, (h  * 770 )/ w), interpolation = cv2.INTER_L
 #dont print if LS as scale invariant
 #print "Original Size:", w, h, p
 
-gim_warped = cv2.cvtColor(orig_im, cv.CV_BGR2GRAY)
-fgim_warped = gim_warped.astype(np.float32)
+#gim_warped = cv2.cvtColor(orig_im, cv.CV_BGR2GRAY)
+#fgim_warped = gim_warped.astype(np.float32)
 
 mask = np.zeros(orig_im.shape[0:2], np.uint8)
 
 #### Use template matching to gather evidence for the twelve cells. ###############################
 # Load cell template image
 # this cell template was chopped out of a normalized image.
-template = cv2.imread(templatefile, cv2.CV_LOAD_IMAGE_GRAYSCALE).astype(np.float32) / 255.0
-(ch, cw) = template.shape
+template = cv2.imread(templatefile, cv2.CV_LOAD_IMAGE_GRAYSCALE)#.astype(np.float32) / 255.0
+(ch, cw) = template.shape[:2]
 
 #drop blue channel
-coefficients = [0.163, 0.837, 0]#[0.163, 0.587, 0.0]#, bgr
+coefficients = [0.7, 0.7, 0.0]#[0.163, 0.837, 0]#[0.163, 0.587, 0.0]#, bgr
 m = np.array(coefficients).reshape((1,3))
 im_warped_nb = cv2.transform(orig_im, m)
-fgim_warped_nb = im_warped_nb.astype(np.float32)
-if debug_images:
-    cv2.imwrite(filenameroot + '.warped_nb.png', fgim_warped_nb, [cv.CV_IMWRITE_PNG_COMPRESSION, 0])
+#im_warped_nb = cv2.cvtColor(orig_im, cv.CV_BGR2GRAY) #cv2.transform(orig_im, m)
 
-result = cv2.matchTemplate(fgim_warped_nb, template, cv.CV_TM_CCOEFF_NORMED)
+#if debug_images:
+cv2.imwrite(filenameroot + '.warped_nb.png', im_warped_nb, [cv.CV_IMWRITE_PNG_COMPRESSION, 0])
+
+result = cv2.matchTemplate(im_warped_nb, template, cv.CV_TM_CCOEFF_NORMED)
 if save_correlation:
     np.savetxt("targetresult.txt", result)
 
