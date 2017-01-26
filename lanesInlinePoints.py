@@ -79,7 +79,11 @@ def RotTrans2Points(srcpoints, dstpoints):
 # 06/12/2014
 # Start of code
 ####################################################################################################
+rl = open('rectifylog.txt', "w")
+
 if len(sys.argv) < 4:
+    rl.write('Insufficient parameters '+len(sys.argv)+'\n')
+    rl.close()
     print 'Insufficient parameters!'
     sys.exit(1)
 
@@ -108,6 +112,8 @@ strpoints = sys.argv[2].split(',')
 
 #test not too many points
 if len(strpoints) != 16:
+    rl.write('Wrong number of points found, '+len(strpoints)+','+strpoints+'\n')
+    rl.close()
     print "Error: Wrong number of points found.",len(strpoints),strpoints
     sys.exit(2)
 
@@ -115,6 +121,8 @@ selectWidth = 0.0
 try:
     selectWidth = float(sys.argv[3])
 except ValueError:
+    rl.write('Selection width not a float.\n')
+    rl.close()
     print "Error: Selection width incorrect."
     sys.exit(3)
 
@@ -132,6 +140,8 @@ try:
         actualPoints_x.append(float(strpoints[i * 2]) * factor)
         actualPoints_y.append(float(strpoints[i * 2 + 1]) * factor)
 except ValueError:
+    rl.write('Cannot convert points to floats.\n')
+    rl.close()
     print "Error: Cannot convert points to floats."
     sys.exit(4)
 
@@ -184,8 +194,8 @@ qrpoints = qrpoints + [[actualPoints_x[idxqr_3], actualPoints_y[idxqr_3]]]
 
 #get max point in x/y
 idxop_2 = 0
-for i in range(5, 8):
-    for j in range(6, 8):
+for i in range(6, 8):
+    for j in range(5, 8):
         if ids_x[i] == ids_y[j]:
             idxop_2 = ids_x[i]
             outerpoints = outerpoints + [[actualPoints_x[idxop_2], actualPoints_y[idxop_2]]]
@@ -210,6 +220,10 @@ if waxpoints[0][1] > waxpoints[1][1]:
     waxpoints[1][0] = tmpx
     waxpoints[1][1] = tmpy
 
+qrstr = ''.join(str(e) for e in qrpoints)
+otstr = ''.join(str(e) for e in outerpoints)
+wxstr = ''.join(str(e) for e in waxpoints)
+rl.write('Points QR '+qrstr+', Outer '+otstr+', Wax '+wxstr+'\n')
 print "QR points", qrpoints
 print "Outer points", outerpoints
 print "Wax points", waxpoints
@@ -274,12 +288,15 @@ for i in range(0, len(src_tests)):
     if error > maxerror:
         maxerror = error
 
+rl.write('Transformation maximum error,'+str(maxerror)+'\n')
+
 print "Transformation maximum error,",maxerror
 with open(resultsfilenameroot + '.csv', "a") as myfile:
     myfile.write('maximum_error,'+str(round(maxerror,2))+',\n');
 
 # bail if error exceeds 15 pixels (relates to sample circle in relation to sample well)
 if maxerror > 15:
+    rl.close()
     print "Error: Transformation error exceeds threshold of 15 pixels.",filename
     sys.exit(5)
 
@@ -517,4 +534,5 @@ cv2.imwrite(resultsfilenameroot + '.processed.png', fringe_warped, [cv.CV_IMWRIT
 #if debug_images:
 #    cv2.imwrite(filenameroot + '.ann.png', im_warped, [cv.CV_IMWRITE_PNG_COMPRESSION, 0])
 
+rl.close()
 sys.exit(0)
