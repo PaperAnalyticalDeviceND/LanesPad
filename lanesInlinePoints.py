@@ -79,11 +79,9 @@ def RotTrans2Points(srcpoints, dstpoints):
 # 06/12/2014
 # Start of code
 ####################################################################################################
-rl = open('rectifylog.txt', "w")
-
 if len(sys.argv) < 4:
-    rl.write('Insufficient parameters '+len(sys.argv)+'\n')
-    rl.close()
+    #rl.write('Insufficient parameters '+len(sys.argv)+'\n')
+    #rl.close()
     print 'Insufficient parameters!'
     sys.exit(1)
 
@@ -94,6 +92,16 @@ filename = sys.argv[1]
 filenameroot = '.'.join(filename.split('.')[:-1])
 resultsfilenameroot = filenameroot
 resultsfilenameroot = '/'.join(filename.split('/')[:-1])+'/processed/'+'.'.join(filename.split('/')[-1].split('.')[:-1])
+
+#open filename /var/www/html/joomla/neuralnetworks/
+pos1 = filename.rfind('-')
+pos2 = filename.rfind('.')
+
+randpart = filename[pos1+1:pos2]
+#print "Rand part", randpart
+
+rl = open('log/rectifylog'+randpart+'.txt', "w")
+rl.write('Filename '+filename+'\n')
 
 # OK load image
 print 'filename is :', filename
