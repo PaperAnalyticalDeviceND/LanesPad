@@ -2,9 +2,7 @@
 import sys
 import subprocess
 #import cv
-#import cv2.cv as cv
 import cv2
-# from cv2 import cv
 import os
 import math
 import numpy as np
@@ -102,10 +100,10 @@ def SortQRMarkerPoints(qrpoints, outerpoints):
         qrpoints = [qr_top_left, qr_bot_left, qr_top_right]
     else:
         #get distance between points and take root 2 in case diag the take half to find bounds of 'near' points
-        print ("QR ", qrpoints)
+        print "QR ", qrpoints
         dist = math.sqrt((qrpoints[0][0] - qrpoints[1][0]) * (qrpoints[0][0] - qrpoints[1][0]) + (
         qrpoints[0][1] - qrpoints[1][1]) * (qrpoints[0][1] - qrpoints[1][1])) / 3.0
-        print( "Dist ", dist)
+        print "Dist ", dist
         #x coords the same? then
         if abs(qrpoints[0][0] - qrpoints[1][0]) < dist:
             if qrpoints[0][1] < qrpoints[1][1]:
@@ -229,7 +227,7 @@ def SeparateQRMarkerPoints(points, meansize):
         for i in range(0,len(outerpoints)):
             if (outerpoints[i][0] - avx) < maxx and (outerpoints[i][1] - avy) < maxy:
                 #remove if so
-                print ("Error point",outerpoints[i])
+                print "Error point",outerpoints[i]
                 outerpoints.pop(i)
                 break
     #still too many outer points?
@@ -253,18 +251,18 @@ def SeparateQRMarkerPoints(points, meansize):
 # Start of code
 ####################################################################################################
 if len(sys.argv) < 2:
-    # print 'Usage: ' + sys.argv[
-    #     0] + '[-i value] [-s] [-w] [-b] [-g] [-d] [-m] [-t templatefile] [-o] imagefile [guess1 [guess2]]'
-    # print '-i is Interactive: use mouse to select QR code rectangle.'
-    # print '      0 no interaction, 1 interact if fails automatic, 2 force interactive.'
-    # print '-s is Smooth: blur the image a little (can be used multiple times.)'
-    # print '-g is graphics: show partial results in windows, press a key to continue.'
-    # print '-w is white balance: make average color in white color square pure white.'
-    # print '-b is "black balance": make average color in black color square pure black.'
-    # print '-m is Matrix: print mapping matrix.'
-    # print '-l is tempLate method: Use to force template matching, not line search.'
-    # print '-r is results in specified sub-folder.'
-    # print '-a is artwork: Pick wax artwork used.'
+    print 'Usage: ' + sys.argv[
+        0] + '[-i value] [-s] [-w] [-b] [-g] [-d] [-m] [-t templatefile] [-o] imagefile [guess1 [guess2]]'
+    print '-i is Interactive: use mouse to select QR code rectangle.'
+    print '      0 no interaction, 1 interact if fails automatic, 2 force interactive.'
+    print '-s is Smooth: blur the image a little (can be used multiple times.)'
+    print '-g is graphics: show partial results in windows, press a key to continue.'
+    print '-w is white balance: make average color in white color square pure white.'
+    print '-b is "black balance": make average color in black color square pure black.'
+    print '-m is Matrix: print mapping matrix.'
+    print '-l is tempLate method: Use to force template matching, not line search.'
+    print '-r is results in specified sub-folder.'
+    print '-a is artwork: Pick wax artwork used.'
     sys.exit(-1)
 
 optlist, args = getopt.getopt(sys.argv[1:], 'wbgdsi:mlt:o:c:r:a:')
@@ -317,18 +315,17 @@ for o, a in optlist:
     elif o == "-r":
         resultsfolder = a
     else:
-        print ('Unhandled option: ', o)
+        print 'Unhandled option: ', o
         sys.exit(-2)
 
-print ('args: ', args)
+print 'args: ', args
 
 #get filenames and roots
 filename = args[0]
 filenameroot = '.'.join(filename.split('.')[:-1])
 resultsfilenameroot = filenameroot
 if resultsfolder != "":
-    resultsfilenameroot = '/'.join(filename.split('/')[:-1])+'/'+resultsfolder+'/'+'.'.join(filename.split('/')[-1].split('.')[:-2])
-#resultsfilenameroot = "./"
+    resultsfilenameroot = '/'.join(filename.split('/')[:-1])+'/'+resultsfolder+'/'+'.'.join(filename.split('/')[-1].split('.')[:-1])
 #print "Results root:",resultsfilenameroot
 if resultsfile == "auto":
     resultsfile = filenameroot+'.csv'
@@ -345,15 +342,9 @@ else:
     guess2 = None
 
 # OK load image
-print ('filename is :', filename)
+print 'filename is :', filename
 
 orig_im = cv2.imread(filename)
-(h, w, p) = orig_im.shape
-
-#need to rotate image?
-if w>h:
-    orig_im = np.rot90( orig_im, 1 )
-
 (h, w, p) = orig_im.shape
 
 #dont print if LS as scale invariant
@@ -370,16 +361,11 @@ if w>h:
 dataLines = []
 
 try:
-    p = subprocess.Popen(["marker_scan/ComputerVision2", filename], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8')
-    #p = subprocess.Popen(["marker_contours/marker_contour", filename], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8')
+    p = subprocess.Popen(["./ComputerVision2", filename], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (stdout, stderr) = p.communicate()
     dataLines = stdout.split("\n")
 except:
-    print ("Unexpected error executing ComputerVision2:", sys.exc_info()[0], ".")
-    sys.exit(-3)
-
-for dl in dataLines:
-    print("data ",dl)
+    print "Unexpected error executing ComputerVision2:", sys.exc_info()[0], ". Reverting to Template method."
 
 points = []
 sumsize = 0
@@ -406,10 +392,10 @@ if len(dataLines) >= 5:
                 points = points + [[x, y, sz]]
                 sumsize += sz
 
-    print ("Points", len(points), "using Line Search method")
+    print "Points", len(points), "using Line Search method"
     if len(points) >= 4:
         #print them
-        print ("Points", points)
+        print "Points", points
 
         #get mean size
         meansize = sumsize / len(points)
@@ -419,7 +405,7 @@ if len(dataLines) >= 5:
 
 #test not too many points
 if (len(qrpoints) + len(outerpoints)) > 6:
-    print ("Error: Too many points found.",filename)
+    print "Error: Too many points found.",filename
     sys.exit(-6)
 
 #Now get source and destination points, choosing the furthest apart for accuracy
@@ -431,20 +417,16 @@ dst_tests = []
 
 #need at least 2 of each points
 if len(qrpoints) >= 2 and len(outerpoints) >= 2:
-    print ("Method: LS. Points found by LS,", len(points))
+    print "Method: LS. Points found by LS,", len(points)
 
     #re-order points
     qrpoints, outerpoints = SortQRMarkerPoints(qrpoints, outerpoints)
 
-    print ("QR points", qrpoints)
-    print ("Outer points", outerpoints)
+    print "QR points", qrpoints
+    print "Outer points", outerpoints
 
     #just add 4 point with preference to outerpoints
     pcount = 0
-
-    #float dest_points[][] = {{85, 1163, 686, 1163, 686, 77, 244, 64, 82, 64, 82, 226},
-    #{85, 1163, 686, 1163, 686, 77, 255, 64, 82, 64, 82, 237}};
-
     #add outerpoints and their transform
     transpoints = [[85, 1163], [686, 1163], [686, 77]]
 
@@ -455,18 +437,8 @@ if len(qrpoints) >= 2 and len(outerpoints) >= 2:
             pcount += 1
 
     #add qr points and their transform
-    transqrpoints = [[82, 64], [82, 237 ], [255, 64]]
+    transqrpoints = [[82, 64], [82, 226], [244, 64]]
 
-    #fist check if aal available
-    if len(qrpoints) == 3:
-        #does point 1 exist? then get rid of co-linear point, remove 5
-        if outerpoints[0][0] >= 0:
-            qrpoints[1][0] = -1;
-        #does point 3 exist? then get rid of co-linear point, remove 6
-        #if outerpoints[2][0] >= 0:
-        #    qrpoints[2][0] = -1;
-
-    #add QR points
     for i in range(0, 3):
         if qrpoints[i][0] >= 0:
             if pcount < 4:
@@ -477,18 +449,18 @@ if len(qrpoints) >= 2 and len(outerpoints) >= 2:
                 src_tests.append(qrpoints[i])
                 dst_tests.append(transqrpoints[i])
 
-    print ("Source points", src_points)
-    print ("Destination points", dst_points)
+    print "Source points", src_points
+    print "Destination points", dst_points
 
 #end of transformation point acquisition
 
 #### Do we have enough points to find the transformation? final test and exit if not.###############
 if len(src_points) < 4:
-    print ("Error: Insufficient data for Transformation.",filename)
+    print "Error: Insufficient data for Transformation.",filename
     sys.exit(-3)
 
-# with open(resultsfilenameroot + '.csv', "w") as myfile:
-#     myfile.write('points,'+str(len(qrpoints))+','+str(len(outerpoints))+',\n');
+with open(resultsfilenameroot + '.csv', "w") as myfile:
+    myfile.write('points,'+str(len(qrpoints))+','+str(len(outerpoints))+',\n');
 
 ####################################################################################################
 # James Sweet. Computer Science and Engineering. Notre Dame.
@@ -517,8 +489,8 @@ np.set_printoptions(precision=4, suppress=True)
 TI = cv2.getPerspectiveTransform(srcpoints, dstpoints)
 
 if mappingmatrix:
-    print ("Mapping Matrix")
-    print (TI.tolist())
+    print "Mapping Matrix"
+    print TI.tolist()
 
 # calculate errors by transforming points
 maxerror = 0
@@ -531,13 +503,13 @@ for i in range(0, len(src_tests)):
     if error > maxerror:
         maxerror = error
 
-print ("Transformation maximum error,",maxerror)
-# with open(resultsfilenameroot + '.csv', "a") as myfile:
-#     myfile.write('maximum_error,'+str(round(maxerror,2))+',\n');
+print "Transformation maximum error,",maxerror
+with open(resultsfilenameroot + '.csv', "a") as myfile:
+    myfile.write('maximum_error,'+str(round(maxerror,2))+',\n');
 
 # bail if error exceeds 15 pixels (relates to sample circle in relation to sample well)
 if maxerror > 15:
-    print ("Error: Transformation error exceeds threshold of 15 pixels.",filename)
+    print "Error: Transformation error exceeds threshold of 15 pixels.",filename
     sys.exit(-4)
 
 #if debug_images:
@@ -546,7 +518,7 @@ if maxerror > 15:
 
 #eye candy
 im_warped = cv2.warpPerspective(orig_im, TI, (690 + 40, 1230 + 20),borderMode=cv2.BORDER_REPLICATE)
-gim_warped = cv2.cvtColor(im_warped, cv2.COLOR_BGR2HSV)
+gim_warped = cv2.cvtColor(im_warped, cv2.COLOR_BGR2GRAY)
 fgim_warped = gim_warped.astype(np.float32)
 
 if graphics:
@@ -561,52 +533,51 @@ sim_warped = im_warped   # handle the case where neither black nor white balance
 
 #### Find wax "bleed" thickness ###################################################################
 # adaptive threshold for black/white
-# athresh = cv2.adaptiveThreshold(gim_warped, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 127, 0)
-# if debug_images:
-#     cv2.imwrite(filenameroot + '.athresh.png', athresh, [cv2.IMWRITE_PNG_COMPRESSION, 0])
-#
-# #find width of thickest bar and estimate the thin one
-# wax_width = 0;
-# on_wax = False
-# for i in range(280,375):
-#     if on_wax:
-#         if athresh[i][25] < 128: #12
-#             wax_width += 1
-#         else:
-#             break
-#     else:
-#         if athresh[i][25] < 128: #34
-#             on_wax = True
-#             wax_width += 1
-wax_width = 10
+athresh = cv2.adaptiveThreshold(gim_warped, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 127, 0)
+if debug_images:
+    cv2.imwrite(filenameroot + '.athresh.png', athresh, [cv2.IMWRITE_PNG_COMPRESSION, 0])
+
+#find width of thickest bar and estimate the thin one
+wax_width = 0;
+on_wax = False
+for i in range(280,375):
+    if on_wax:
+        if athresh[i][25] < 128: #12
+            wax_width += 1
+        else:
+            break
+    else:
+        if athresh[i][25] < 128: #34
+            on_wax = True
+            wax_width += 1
+
 #print it and save
-print ("Wax width",wax_width,(wax_width * 15) / 30)
-# with open(resultsfilenameroot + '.csv', "a") as myfile:
-#     myfile.write('wax_width,'+str(wax_width)+',\n');
+print "Wax width",wax_width,(wax_width * 15) / 30
+with open(resultsfilenameroot + '.csv', "a") as myfile:
+    myfile.write('wax_width,'+str(wax_width)+',\n');
 
 #### Find squares #################################################################################
-# white_square = (0, 0)
-# template_squares = cv2.imread("padscrs2.png", cv2.IMREAD_GRAYSCALE).astype(np.float32) / 255.0
-# result_squares = cv2.matchTemplate(fgim_warped, template_squares, cv2.TM_CCOEFF_NORMED)
-# sqminVal, sqmaxVal, sqminLoc, sqmaxLoc = cv2.minMaxLoc(result_squares)
-# #print "Squares at",sqmaxLoc[0]+120,sqmaxLoc[1]+76,"with threshold",sqmaxVal
-# if sqmaxVal > 0.80:
-#     #TODO read in the template offsets (120, 76)
-#     white_square = (sqmaxLoc[0]+120,sqmaxLoc[1]+76)
-#     print ("Squares at", white_square, "with threshold", sqmaxVal)
+white_square = (0, 0)
+template_squares = cv2.imread("padscrs2.png", cv2.IMREAD_GRAYSCALE).astype(np.float32) / 255.0
+result_squares = cv2.matchTemplate(fgim_warped, template_squares, cv2.TM_CCOEFF_NORMED)
+sqminVal, sqmaxVal, sqminLoc, sqmaxLoc = cv2.minMaxLoc(result_squares)
+#print "Squares at",sqmaxLoc[0]+120,sqmaxLoc[1]+76,"with threshold",sqmaxVal
+if sqmaxVal > 0.80:
+    #TODO read in the template offsets (120, 76)
+    white_square = (sqmaxLoc[0]+120,sqmaxLoc[1]+76)
+    print "Squares at", white_square, "with threshold", sqmaxVal
 
 #### Use template matching to gather evidence for the twelve cells. ###############################
 # Load cell template image
 # this cell template was chopped out of a normalized image.
-template = cv2.imread(templatefile, cv2.IMREAD_GRAYSCALE).astype(np.float32)
+template = cv2.imread(templatefile, cv2.IMREAD_GRAYSCALE).astype(np.float32) / 255.0
 (ch, cw) = template.shape
 
 #drop blue channel
 coefficients = [0.163, 0.837, 0]#[0.163, 0.587, 0.0]#, bgr
 m = np.array(coefficients).reshape((1,3))
 im_warped_nb = cv2.transform(im_warped, m)
-fgim_warped_nb = cv2.cvtColor(im_warped, cv2.COLOR_BGR2GRAY).astype(np.float32)
-#fgim_warped_nb = im_warped_nb.astype(np.float32)
+fgim_warped_nb = im_warped_nb.astype(np.float32)
 if debug_images:
     cv2.imwrite(filenameroot + '.warped_nb.png', fgim_warped_nb, [cv2.IMWRITE_PNG_COMPRESSION, 0])
 
@@ -628,13 +599,13 @@ comparePoints = [[[387, 214], [387, 1164]], [[387-17, 214], [387, 1164]], [[387+
 #get maximum points until we have all three or the certainty is <=threshold
 cellmask = np.ones(result.shape, np.uint8)
 cellmaxVal = 1
-cellthr = 0.70
+cellthr = 0.7
 
 while len(cellPoints) < 2 and cellmaxVal > cellthr:
     cellminVal, cellmaxVal, cellminLoc, cellmaxLoc = cv2.minMaxLoc(result, cellmask);
-    print ("Max cell point location", cellmaxLoc, ",", cellmaxVal)
     if cellmaxVal <= cellthr:
         break
+    print "Max cell point location", cellmaxLoc, ",", cellmaxVal
     #TODO read in the template offsets (2, 1)
     cellPoints.append((cellmaxLoc[0] + cw / 2.0 - 0, cellmaxLoc[1] + ch / 2.0 - 0))
     rect = [[cellmaxLoc[0] - cw / 2, cellmaxLoc[1] - ch / 2], [cellmaxLoc[0] + cw / 2, cellmaxLoc[1] - ch / 2],
@@ -644,7 +615,7 @@ while len(cellPoints) < 2 and cellmaxVal > cellthr:
 ####################################################################################################
 # bail if error exceeds 15 pixels (relates to sample circle in relation to sample well)
 if len(cellPoints) != 2:
-    print ("Error: Wax target not found with > 0.70 confidence.",filename)
+    print "Error: Wax target not found with > 0.85 confidence.",filename
     sys.exit(-5)
 
 #check order of points and add equivalent points from artwork
@@ -656,9 +627,9 @@ if dist1 > dist2:
     temp = cellPoints[0]
     cellPoints[0] = cellPoints[1]
     cellPoints[1] = temp
-    print ("Flipped",cellPoints[0])
+    print "Flipped",cellPoints[0]
 
-print ("Wax Points",cellPoints,"actual",comparePoints[0])
+print "Wax Points",cellPoints,"actual",comparePoints[0]
 
 #print targets found
 k= 0
@@ -678,19 +649,19 @@ if len(cellPoints) > 1:
         #find minimum angles, and select that as template values if artwork
         minangle = sys.float_info.max
         for i in range(0,len(comparePoints)):
-            print ("data",TCPA[i].A[0][1])
+            print "data",TCPA[i].A[0][1]
             iangl = math.fabs(math.asin(min(TCPA[i].A[0][1],1.0)))
             if iangl < minangle:
                 minangle = iangl
                 artwork = i
 
-        print ("Minimum angle was at index",artwork)
+        print "Minimum angle was at index",artwork
         TCP = TCPA[artwork]
     else:
         TCP = RotTrans2Points(cellPoints, comparePoints[artwork])
 
     #get full matrix
-    print ("Mat",TCP.A[0][2],TCP.A[1][2])
+    print "Mat",TCP.A[0][2],TCP.A[1][2]
     TICP = np.matrix([
         [TCP.A[0][0], TCP.A[0][1], TCP.A[0][2]],
         [TCP.A[1][0], TCP.A[1][1], TCP.A[1][2]],
@@ -698,8 +669,8 @@ if len(cellPoints) > 1:
     ])
 
 #flag artwork used in csv
-# with open(resultsfilenameroot + '.csv', "a") as myfile:
-#     myfile.write('artwork,'+str(artwork+1)+',\n');
+with open(resultsfilenameroot + '.csv', "a") as myfile:
+    myfile.write('artwork,'+str(artwork+1)+',\n');
 
 # Calculate data values
 # Handle Colour Squares
@@ -708,11 +679,11 @@ if resultsfile == "":
 else:
 	fout = file(resultsfile, file_rights)
 
-# print >>fout,'File name,%s' % (filename)
-# print >> fout, 'i, j, red, green, blue, A'
-# if resultsfile != "":
-#     print 'File name,%s' % (filename)
-#     print 'i, j, red, green, blue, A'
+print >>fout,'File name,%s' % (filename)
+print >> fout, 'i, j, red, green, blue, A'
+if resultsfile != "":
+    print 'File name,%s' % (filename)
+    print 'i, j, red, green, blue, A'
 
 colour_mask = np.zeros(im_warped.shape[0:2], np.uint8)
 
@@ -725,42 +696,42 @@ colour_square_center = [
 A = 70
 k = 0
 #calculate offset if detected
-# square_offset = (0, 0)
-# if white_square[0] > 0 and white_square[1] > 0:
-#     square_offset = (colour_square_center[2][1][0] - white_square[0], colour_square_center[2][1][1] - white_square[1])
-#
-# for i in range(0, len(colour_square_center)):
-#     for j in range(0, len(colour_square_center[i])):
-#         # Offset location by averages
-#         cx = colour_square_center[i][j][0] - square_offset[0]
-#         cy = colour_square_center[i][j][1] - square_offset[1]
-#
-#         pt1 = (cx - 8, cy - 8)
-#         pt2 = (cx + 8, cy + 8)
-#
-#         colour_mask.fill(0)
-#         cv2.rectangle(colour_mask, pt1, pt2, (255, 0, 0), 1)
-#         s = cv2.mean(sim_warped, colour_mask)
-#
-#         with open(resultsfilenameroot + '.csv', "a") as myfile:
-#             myfile.write('square,'+str(i)+','+str(j)+','+str(round(s[0],2))+','+str(round(s[1],2))+','+str(round(s[2],2))+',\n');
-#
-#         # if i == 2 and j == 1:
-#         #     A = 255 - (s[0] + s[1] + s[2]) / 3
-#         #     #print "A value", A
-#         #     print >> fout, '%d, %d, %d, %d, %d, %d' % (i, j, s[0], s[1], s[2], A)
-#         #     if resultsfile != "":
-#         #         print '%d, %d, %d, %d, %d, %d' % (i, j, s[0], s[1], s[2], A)
-#         # else:
-#         #     print >> fout, '%d, %d, %d, %d, %d' % (i, j, s[0], s[1], s[2])
-#         #     if resultsfile != "":
-#         #         print '%d, %d, %d, %d, %d' % (i, j, s[0], s[1], s[2])
-#
-#         cv2.rectangle(im_warped, pt1, pt2, (255, 0, 0), 1)
-#         cv2.putText(im_warped, str(k), (cx, cy), cv2.FONT_HERSHEY_PLAIN, 2.0, (255, 255, 255))
-#         k = k + 1
+square_offset = (0, 0)
+if white_square[0] > 0 and white_square[1] > 0:
+    square_offset = (colour_square_center[2][1][0] - white_square[0], colour_square_center[2][1][1] - white_square[1])
 
-#print >> fout, ''
+for i in range(0, len(colour_square_center)):
+    for j in range(0, len(colour_square_center[i])):
+        # Offset location by averages
+        cx = colour_square_center[i][j][0] - square_offset[0]
+        cy = colour_square_center[i][j][1] - square_offset[1]
+
+        pt1 = (cx - 8, cy - 8)
+        pt2 = (cx + 8, cy + 8)
+
+        colour_mask.fill(0)
+        cv2.rectangle(colour_mask, pt1, pt2, (255, 0, 0), 1)
+        s = cv2.mean(sim_warped, colour_mask)
+
+        with open(resultsfilenameroot + '.csv', "a") as myfile:
+            myfile.write('square,'+str(i)+','+str(j)+','+str(round(s[0],2))+','+str(round(s[1],2))+','+str(round(s[2],2))+',\n');
+
+        if i == 2 and j == 1:
+            A = 255 - (s[0] + s[1] + s[2]) / 3
+            #print "A value", A
+            print >> fout, '%d, %d, %d, %d, %d, %d' % (i, j, s[0], s[1], s[2], A)
+            if resultsfile != "":
+                print '%d, %d, %d, %d, %d, %d' % (i, j, s[0], s[1], s[2], A)
+        else:
+            print >> fout, '%d, %d, %d, %d, %d' % (i, j, s[0], s[1], s[2])
+            if resultsfile != "":
+                print '%d, %d, %d, %d, %d' % (i, j, s[0], s[1], s[2])
+
+        cv2.rectangle(im_warped, pt1, pt2, (255, 0, 0), 1)
+        cv2.putText(im_warped, str(k), (cx, cy), cv2.FONT_HERSHEY_PLAIN, 2.0, (255, 255, 255))
+        k = k + 1
+
+print >> fout, ''
 
 #Fringe lines
 #fringe = [

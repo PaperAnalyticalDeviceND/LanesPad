@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import sys
 import subprocess
-import cv
+#import cv
 import cv2
 import os
 import math
@@ -36,13 +36,13 @@ def RotTrans2Points(srcpoints, dstpoints):
     ang = math.atan2(v2[1], v2[0]) - math.atan2(v1[1], v1[0])
     cosang = math.cos(ang)
     sinang = math.sin(ang)
-    
+
     #create rotation matrix
     R = np.matrix([
         [cosang, -sinang],
         [sinang, cosang]
     ])
-        
+
     # Calculate Scaling
     Source = R * new_src.T
 
@@ -51,26 +51,26 @@ def RotTrans2Points(srcpoints, dstpoints):
     for i in range(0, len(srcpoints)):
         sum_ss += new_src[i][0] * new_src[i][0]
         sum_ss += new_src[i][1] * new_src[i][1]
-               
+
         sum_tt += new_dst[i][0] * Source.A[0][i];
         sum_tt += new_dst[i][1] * Source.A[1][i];
 
     # Scale Matrix
     R = (sum_tt / sum_ss) * R
-    
+
     # Calculate Translation
     C_A = np.matrix([[-centroid_a[0], -centroid_a[1]]])
     C_B = np.matrix([[centroid_b[0], centroid_b[1]]])
-    
+
     TL = (C_B.T + (R * C_A.T))
-    
+
     # Combine Results
     # version for image transformation
     T = np.matrix([
         [R.A[0][0], R.A[0][1], TL.A[0][0]],
         [R.A[1][0], R.A[1][1], TL.A[1][0]]
     ])
-                   
+
     #return partial matrix
     return T
 
@@ -176,7 +176,7 @@ for i in range(0, 3): #over x
             startindex = j
             idxqr_1 = ids_x[i]
             qrpoints = qrpoints + [[actualPoints_x[idxqr_1], actualPoints_y[idxqr_1]]]
-        
+
 
 outerpoints = outerpoints + [[actualPoints_x[idxop_1], actualPoints_y[idxop_1]]]
 
@@ -269,6 +269,7 @@ print "Destination points", dst_points
 
 with open(resultsfilenameroot + '.csv', "w") as myfile:
     myfile.write('points,'+str(len(qrpoints))+','+str(len(outerpoints))+',\n');
+    myfile.close()
 
 ####################################################################################################
 # James Sweet. Computer Science and Engineering. Notre Dame.
@@ -301,6 +302,7 @@ rl.write('Transformation maximum error,'+str(maxerror)+'\n')
 print "Transformation maximum error,",maxerror
 with open(resultsfilenameroot + '.csv', "a") as myfile:
     myfile.write('maximum_error,'+str(round(maxerror,2))+',\n');
+    myfile.close()
 
 # bail if error exceeds 15 pixels (relates to sample circle in relation to sample well)
 if maxerror > 15:
@@ -314,7 +316,7 @@ if maxerror > 15:
 
 #eye candy
 im_warped = cv2.warpPerspective(orig_im, TI, (690 + 40, 1230 + 20),borderMode=cv2.BORDER_REPLICATE)
-gim_warped = cv2.cvtColor(im_warped, cv.CV_BGR2GRAY)
+gim_warped = cv2.cvtColor(im_warped, cv2.COLOR_BGR2GRAY)
 fgim_warped = gim_warped.astype(np.float32)
 
 #if debug_images:
@@ -347,11 +349,12 @@ for i in range(280,375):
 print "Wax width",wax_width,(wax_width * 15) / 30
 with open(resultsfilenameroot + '.csv', "a") as myfile:
     myfile.write('wax_width,'+str(wax_width)+',\n');
+    myfile.close()
 
 #### Find squares #################################################################################
 white_square = (0, 0)
-template_squares = cv2.imread("padscrs2.png", cv2.CV_LOAD_IMAGE_GRAYSCALE).astype(np.float32) / 255.0
-result_squares = cv2.matchTemplate(fgim_warped, template_squares, cv.CV_TM_CCOEFF_NORMED)
+template_squares = cv2.imread("padscrs2.png", cv2.IMREAD_GRAYSCALE).astype(np.float32) / 255.0
+result_squares = cv2.matchTemplate(fgim_warped, template_squares, cv2.TM_CCOEFF_NORMED)
 sqminVal, sqmaxVal, sqminLoc, sqmaxLoc = cv2.minMaxLoc(result_squares)
 #print "Squares at",sqmaxLoc[0]+120,sqmaxLoc[1]+76,"with threshold",sqmaxVal
 if sqmaxVal > 0.80:
@@ -361,7 +364,8 @@ if sqmaxVal > 0.80:
 
 cellPoints = []
 #points from artwork, chosen by artwork variable set by -a X.
-comparePoints = [[[387, 214], [387, 1164]], [[387-17, 214], [387, 1164]], [[387+5, 214], [387-11, 1164]]]
+#comparePoints = [[[387, 214], [387, 1164]], [[387-17, 214], [387, 1164]], [[387+5, 214], [387-11, 1164]]]
+comparePoints = [[[387, 214], [387, 1164]], [[387, 214], [387, 1164]], [[387, 214], [387, 1164]]]
 
 #need to transform waxpoints first
 for i in range(0, 2):
@@ -424,6 +428,7 @@ if len(cellPoints) > 1:
 #flag artwork used in csv
 with open(resultsfilenameroot + '.csv', "a") as myfile:
     myfile.write('artwork,'+str(artwork+1)+',\n');
+    myfile.close()
 
 # Calculate data values
 # Handle Colour Squares
@@ -464,6 +469,7 @@ for i in range(0, len(colour_square_center)):
 
         with open(resultsfilenameroot + '.csv', "a") as myfile:
             myfile.write('square,'+str(i)+','+str(j)+','+str(round(s[0],2))+','+str(round(s[1],2))+','+str(round(s[2],2))+',\n');
+            myfile.close()
 
         if i == 2 and j == 1:
             A = 255 - (s[0] + s[1] + s[2]) / 3
@@ -536,7 +542,7 @@ cv2.line(fringe_warped,(targetloc[1][0]-5,targetloc[1][1]),(targetloc[1][0]+5,ta
 #cv2.line(fringe_warped,(70, 339+wax_width/2),(706, 339+wax_width/2),(0,255,0),1)
 
 #output file
-cv2.imwrite(resultsfilenameroot + '.processed.png', fringe_warped, [cv.CV_IMWRITE_PNG_COMPRESSION, 0])
+cv2.imwrite(resultsfilenameroot + '.processed.png', fringe_warped, [cv2.IMWRITE_PNG_COMPRESSION, 0])
 
 # Print annotated image
 #if debug_images:
