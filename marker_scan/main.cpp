@@ -1,5 +1,6 @@
-#include <cv.h>
-#include <highgui.h>
+#include <opencv2/opencv.hpp>
+// #include <cv.h>
+// #include <highgui.h>
 
 using namespace cv;
 
@@ -71,9 +72,9 @@ const std::vector<Location> FindMarksHorizontal( Mat image, const int maxfeature
                             //j = max(j, k);
                             j += data[2] + data[3] + data[4];
                         }
-                        
+
                         //j += 1;//data[0];// + data[1];
-                        
+
                         break;
                     }
                 }
@@ -163,26 +164,26 @@ int main( int argc, char **argv ) {
 
     // Read Image
     Mat image = imread( argv[1], 1 );
-    
+
     const int cols = image.cols;
     const int rows = image.rows;
-    
+
     float scale = 1.0;
 
     if( std::abs(cols - 1950) > 200){
         scale = (float)cols / 1950;
         const float inv_scale = 1.0 / scale;
         const int newrows = (int)(rows * inv_scale + 0.5);
-    
+
         resize(image, image, Size(1950, newrows), 0, 0);
     }
 
     //std::cout << "Scale " << scale << std::endl;
-    
+
     //pixels per feature
     const int halfpixelsperfeature = max(((image.rows / 21 / 7) + (image.cols / 28 / 7)) / 4, 1);
     const int maxfeature = halfpixelsperfeature * 2 * 3 * 2;
-    
+
     Mat imblur;
     blur( image, imblur, Size( halfpixelsperfeature/2, halfpixelsperfeature/2 ), Point(-1,-1) );
 
@@ -212,19 +213,19 @@ int main( int argc, char **argv ) {
                         break;
                     }
                 }
-                
+
                 if(newpoint){
                     std::cout << "Point: " << (int)(Horizontal[i].X * scale + 0.5) << ", " << (int)(Horizontal[i].Y * scale + 0.5) << ", " << (int)(((Horizontal[i].size + Vertical[j].size) / 2) * scale + 0.5)<< std::endl;
 
                     DrawCross( image, Horizontal[i].X, Horizontal[i].Y, 64 );
-                    
+
                     locs.push_back(Horizontal[i]);
                 }
-                
+
             }
         }
     }
-    
+
     // Draw to screen
     //cv::namedWindow( "Display Image", CV_WINDOW_AUTOSIZE );
     //cv::imshow( "Display Image", image );

@@ -47,30 +47,30 @@ int main ( int argc, char **argv )
 	if(imagein.empty()){ cerr << "ERR: Unable to find image.\n" << endl;
 		return -1;
 	}
-    
+
     if(imagein.size().width >  imagein.size().height){
         transpose(imagein, imagein);
         flip(imagein, imagein, 1);
     }
 
     balance_white(imagein);
-    
-    float new_width = 600.0;
-    
+
+    float new_width = 720.0;
+
     //get image size
     //####std::cout << "Input size " << imagein.size().width << ", " << imagein.size().height << "." << std::endl;
-    
+
     Mat image;
-    
+
     float ratio = imagein.size().width / new_width;
-    
+
     //####std::cout << "Ratio " << ratio << "." << std::endl;
-    
+
     resize(imagein, image, Size(new_width, (imagein.size().height  * new_width )/ imagein.size().width), 0, 0, INTER_LINEAR );
-    
+
     //get image size
     //####std::cout << "Working size " << image.size().width << ", " << image.size().height << "." << std::endl;
-	
+
     //get mid point
     Point2f midpoint = Point2f(image.size().width/2, image.size().height/2);
 
@@ -78,7 +78,7 @@ int main ( int argc, char **argv )
 	Mat gray(image.size(), CV_MAKETYPE(image.depth(), 1));			// To hold Grayscale Image
     Mat gray_blur(image.size(), CV_MAKETYPE(image.depth(), 1));			// To hold Grayscale Image
 	Mat edges(image.size(), CV_MAKETYPE(image.depth(), 1));			// To hold Grayscale Image
-    
+
     //vectors for contour data
 	vector<vector<Point> > contours;
 	vector<Vec4i> hierarchy;
@@ -87,9 +87,13 @@ int main ( int argc, char **argv )
 
     cvtColor(image,gray,CV_RGB2GRAY);		// Convert Image captured from Image Input to GrayScale
     /// Reduce noise with a kernel 3x3
-    blur( gray, gray_blur, Size(2,2) );
+    blur( gray, gray_blur, Size(4,4) );
 
-    Canny(gray_blur, edges, 40 , 150, 3);		// Apply Canny edge detection on the gray image
+    // Threshold Image
+    //Mat temp;
+    //adaptiveThreshold( gray_blur, gray_blur, 255, ADAPTIVE_THRESH_MEAN_C, THRESH_BINARY, 127, 10 );//127, ADAPTIVE_THRESH_MEAN_C, ADAPTIVE_THRESH_GAUSSIAN_C
+    //gray_blur.convertTo(gray_blur, -1, 2, 0);
+    Canny(gray_blur, edges, 25 , 75, 3);		// Apply Canny edge detection on the gray image
 
 
     findContours( edges, contours, hierarchy, RETR_TREE, CV_CHAIN_APPROX_SIMPLE); // Find contours with hierarchy
@@ -114,35 +118,36 @@ int main ( int argc, char **argv )
         if(hierarchy[k][2] != -1)
         c = c+1;
 
-        if (c >= 3)
+        if (c >= 5)
         {
             Markers.push_back(i);
         }
         //if( c > 1)
           //  std::cout << "Depth  " << c << " size " << i << std::endl;
     }
-    
+
     // Get Moments for all Contours and the mass centers
     vector<data_point> order;
-    
+
     for( int i=0; i < Markers.size(); i++){
         Scalar color( 0,128,0);
         drawContours(image, contours, Markers[i], color, 2, 8, hierarchy);
-        
+
         Moments mum = moments( contours[Markers[i]], false );
         Point2f mc = Point2f( mum.m10/mum.m00 , mum.m01/mum.m00 );
 
         //std::cout << "Markers " << Markers[i] << " index " << i << ", dist to mid " << cv_distance(midpoint, mc[i]) << "." << std::endl;
-        
+
         //calculate distance to nearest edge
         float dist = std::min(std::min(std::min(mc.x, new_width - mc.x), mc.y), image.size().height - mc.y);
-        
+
         Rect box = boundingRect(contours[Markers[i]]);
-        
+
         float dia = std::max(box.width, box.height) / 2;
+        float asprat = std::max((float)box.width/(float)box.height, (float)box.height/(float)box.width);
 
         //only add it if sensible
-        if(dia < 30 && dia > 15){
+        if(asprat < 1.5 && dia < 45 && dia > 5/* && !(mc.x > 300 && mc.x < 420)*/){
             order.push_back(data_point(i, dist, dia, mc));
         }
     }
@@ -156,7 +161,7 @@ int main ( int argc, char **argv )
                     const float iy = order[i].mc.y;
                     const float jx = order[j].mc.x;
                     const float jy = order[j].mc.y;
-                    
+
                     if(fabs(ix-jx) < 5 && fabs(iy-jy) < 5){
                         if(order[i].dia < order[j].dia){
                             order[i].valid = false;
@@ -169,10 +174,10 @@ int main ( int argc, char **argv )
             }
         }
     }
-    
+
     //sort vector
     std::sort(order.begin(), order.end(), orderfunction);
-    
+
     //find center of mass
     Point2f com = Point2f(0.0, 0.0);
     float pcountf = 0.0;
@@ -183,36 +188,36 @@ int main ( int argc, char **argv )
             pcountf += 1.0;
         }
     }
-    
+
     com.x /= pcountf;
     com.y /= pcountf;
     circle( image, com, 10, Scalar( 0, 255, 255 ), 1, 8 );
-    
+
     //count points
     int pcount = 0;
-    
+
     //loop
     for( int j=0; j<order.size(); j++){
         if(order[j].valid){
             int i = order[j].i;
             float dia = order[j].dia;
             Point2f mcd = order[j].mc;
-            
+
             //if top LHS then QR code marker
             if(mcd.x < (com.x + 30) && mcd.y < com.y){
                 dia = 27;
             }else{
                 dia = 20;
             }
-            
+
             circle( image, mcd, dia, Scalar( 0, 0, 255 ), 1, 8 );
-            
+
             //std::cout << "i "<< i << ", " << order[j] << " Markers " << Markers[i] << " index " << i << ", dist to edge " << order[j].y << "." << std::endl;
             std::cout << "Point: "<< int(mcd.y * ratio + 0.5) << ", " << int(mcd.x * ratio  + 0.5) << ", " << int(dia * ratio + 0.5) << std::endl;
             if(pcount++ >= 5) break;
         }
     }
-    
+
     if(show){
         imshow ( "Image", image );
 
@@ -228,7 +233,7 @@ void balance_white(cv::Mat mat) {
     double discard_ratio = 0.05;
     int hists[3][256];
     memset(hists, 0, 3*256*sizeof(int));
-    
+
     for (int y = 0; y < mat.rows; ++y) {
         uchar* ptr = mat.ptr<uchar>(y);
         for (int x = 0; x < mat.cols; ++x) {
@@ -237,7 +242,7 @@ void balance_white(cv::Mat mat) {
             }
         }
     }
-    
+
     // cumulative hist
     int total = mat.cols*mat.rows;
     int vmin[3], vmax[3];
@@ -254,8 +259,8 @@ void balance_white(cv::Mat mat) {
         if (vmax[i] < 255 - 1)
         vmax[i] += 1;
     }
-    
-    
+
+
     for (int y = 0; y < mat.rows; ++y) {
         uchar* ptr = mat.ptr<uchar>(y);
         for (int x = 0; x < mat.cols; ++x) {
