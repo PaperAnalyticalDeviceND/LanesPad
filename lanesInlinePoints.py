@@ -85,13 +85,24 @@ if len(sys.argv) < 4:
     print 'Insufficient parameters!'
     sys.exit(1)
 
+#select QR artwork
+qr_artwork = 1
+if len(sys.argv) > 4:
+    #id < 15155 then old
+    try:
+        if int(argv[4]) < 15155:
+            qr_artwork = 0
+    except:
+        pass
+
+#wax artwork (now not used)
 artwork = -1
 
 #get filenames and roots
 filename = sys.argv[1]
 filenameroot = '.'.join(filename.split('.')[:-1])
 resultsfilenameroot = filenameroot
-resultsfilenameroot = '/'.join(filename.split('/')[:-1])+'/processed/'+'.'.join(filename.split('/')[-1].split('.')[:-1])
+resultsfilenameroot = '/'.join(filename.split('/')[:-1])+'/../processed/'+'.'.join(filename.split('/')[-1].split('.')[:-1])
 
 #open filename /var/www/html/joomla/neuralnetworks/
 pos1 = filename.rfind('-')
@@ -249,8 +260,14 @@ for i in range(0, 3):
     src_points.append(outerpoints[i])
     dst_points.append(transpoints[i])
 
+#float dest_points[][] = {{85, 1163, 686, 1163, 686, 77, 244, 64, 82, 64, 82, 226}, {85, 1163, 686, 1163, 686, 77, 255, 64, 82, 64, 82, 237}};
 #add qr points and their transform
-transqrpoints = [[82, 64], [82, 226], [244, 64]]
+#new
+transqrpoints = [[82, 64], [82, 237], [255, 64]]
+
+#old QR artwork?
+if qr_artwork == 0:
+    transqrpoints = [[82, 64], [82, 226], [244, 64]]
 
 #add QR points
 for i in range(0, 3):
