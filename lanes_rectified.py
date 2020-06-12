@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import sys
 import subprocess
-import cv
+#import cv
 import cv2
 import os
 import math
@@ -185,7 +185,7 @@ if w>h:
 #eye candy
 im_warped = orig_im.copy() #cv2.warpPerspective(orig_im, TI, (690 + 40, 1230 + 20),borderMode=cv2.BORDER_REPLICATE)
 
-gim_warped = cv2.cvtColor(im_warped, cv.CV_BGR2GRAY)
+gim_warped = cv2.cvtColor(im_warped, cv2.COLOR_BGR2GRAY)
 fgim_warped = gim_warped.astype(np.float32)
 
 if graphics:
@@ -193,7 +193,7 @@ if graphics:
     cv2.waitKey(0)
 
 if debug_images:
-    cv2.imwrite(filenameroot + '.warped.png', im_warped, [cv.CV_IMWRITE_PNG_COMPRESSION, 0])
+    cv2.imwrite(filenameroot + '.warped.png', im_warped, [cv2.IMWRITE_PNG_COMPRESSION, 0])
 
 mask = np.zeros(im_warped.shape[0:2], np.uint8)
 sim_warped = im_warped   # handle the case where neither black nor white balance
@@ -202,7 +202,7 @@ sim_warped = im_warped   # handle the case where neither black nor white balance
 # adaptive threshold for black/white
 athresh = cv2.adaptiveThreshold(gim_warped, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 127, 0)
 if debug_images:
-    cv2.imwrite(filenameroot + '.athresh.png', athresh, [cv.CV_IMWRITE_PNG_COMPRESSION, 0])
+    cv2.imwrite(filenameroot + '.athresh.png', athresh, [cv2.IMWRITE_PNG_COMPRESSION, 0])
 
 #find width of thickest bar and estimate the thin one
 wax_width = 0;
@@ -225,8 +225,8 @@ with open(resultsfilenameroot + '.csv', "a") as myfile:
 
 #### Find squares #################################################################################
 white_square = (0, 0)
-template_squares = cv2.imread("padscrs2.png", cv2.CV_LOAD_IMAGE_GRAYSCALE).astype(np.float32) / 255.0
-result_squares = cv2.matchTemplate(fgim_warped, template_squares, cv.CV_TM_CCOEFF_NORMED)
+template_squares = cv2.imread("padscrs2.png", cv2.IMREAD_GRAYSCALE).astype(np.float32) / 255.0
+result_squares = cv2.matchTemplate(fgim_warped, template_squares, cv2.TM_CCOEFF_NORMED)
 sqminVal, sqmaxVal, sqminLoc, sqmaxLoc = cv2.minMaxLoc(result_squares)
 #print "Squares at",sqmaxLoc[0]+120,sqmaxLoc[1]+76,"with threshold",sqmaxVal
 if sqmaxVal > 0.80:
@@ -237,7 +237,7 @@ if sqmaxVal > 0.80:
 #### Use template matching to gather evidence for the twelve cells. ###############################
 # Load cell template image
 # this cell template was chopped out of a normalized image.
-template = cv2.imread(templatefile, cv2.CV_LOAD_IMAGE_GRAYSCALE).astype(np.float32) / 255.0
+template = cv2.imread(templatefile, cv2.IMREAD_GRAYSCALE).astype(np.float32) / 255.0
 (ch, cw) = template.shape
 
 #drop blue channel
@@ -246,9 +246,9 @@ m = np.array(coefficients).reshape((1,3))
 im_warped_nb = cv2.transform(im_warped, m)
 fgim_warped_nb = im_warped_nb.astype(np.float32)
 if debug_images:
-    cv2.imwrite(filenameroot + '.warped_nb.png', fgim_warped_nb, [cv.CV_IMWRITE_PNG_COMPRESSION, 0])
+    cv2.imwrite(filenameroot + '.warped_nb.png', fgim_warped_nb, [cv2.IMWRITE_PNG_COMPRESSION, 0])
 
-result = cv2.matchTemplate(fgim_warped_nb, template, cv.CV_TM_CCOEFF_NORMED)
+result = cv2.matchTemplate(fgim_warped_nb, template, cv2.TM_CCOEFF_NORMED)
 if save_correlation:
     np.savetxt("targetresult.txt", result)
 
@@ -436,7 +436,7 @@ cv2.line(fringe_warped,(comparePoints[1][0]-5,comparePoints[1][1]),(comparePoint
 #cv2.line(fringe_warped,(70, 339+wax_width/2),(706, 339+wax_width/2),(0,255,0),1)
 
 #output file
-cv2.imwrite(resultsfilenameroot + '.processed.png', fringe_warped, [cv.CV_IMWRITE_PNG_COMPRESSION, 0])
+cv2.imwrite(resultsfilenameroot + '.processed.png', fringe_warped, [cv2.IMWRITE_PNG_COMPRESSION, 0])
 
 #show annotated?
 if graphics:
@@ -445,6 +445,6 @@ if graphics:
 
 # Print annotated image
 if debug_images:
-    cv2.imwrite(filenameroot + '.ann.png', im_warped, [cv.CV_IMWRITE_PNG_COMPRESSION, 0])
+    cv2.imwrite(filenameroot + '.ann.png', im_warped, [cv2.IMWRITE_PNG_COMPRESSION, 0])
 
 sys.exit(0)
